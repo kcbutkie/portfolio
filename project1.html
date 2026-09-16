@@ -30,16 +30,18 @@
     </section>
   <!-- ============ CHART (worked example) ============ -->
 </body>
-	
+	<section>
     <figure>
     <div id="chart1" class="chart"></div>
     <figcaption class="writeup">
-      chart 1 is a scatterplot that shows the datapoints grouped by year, with the year along the x axis and the values along the y axis. 
+      Chart 1 is a scatterplot that shows the datapoints grouped by year, with the year along the x axis and the values along the y axis. 
     
       The three lakes are color-coded so that we can see the overall trend between all three lakes but also interpret some of the nuances between them. 
     </figcaption>
   </figure>
- 
+ </section>
+
+	<section>
     <figure>
     <div id="chart2" class="chart"></div>
     <figcaption class="writeup">
@@ -48,7 +50,9 @@
 		5ppm is considered to be the threshold for dangerous levels of cadmium, and this chart definitely helps portray that. 
     </figcaption>
   </figure>
-	 
+	</section>
+
+	<section>
     <figure>
     <div id="chart3" class="chart"></div>
     <figcaption class="writeup">
@@ -6275,10 +6279,93 @@
       "continuousWidth": 300
     }
   },
-  "data": {
-    "name": "data-5ff80b0f287c13829d81cbe7c2f75b10"
-  },
   "datasets": {
+    "data-26af7b11a22a8c1e0c4ce98d418341be": [
+      {
+        "Value": 9.81111111111111,
+        "Year": 1992
+      },
+      {
+        "Value": 6.1788333333333325,
+        "Year": 1993
+      },
+      {
+        "Value": 5.711111111111111,
+        "Year": 1994
+      },
+      {
+        "Value": 5.634363636363637,
+        "Year": 1995
+      },
+      {
+        "Value": 4.054,
+        "Year": 1996
+      },
+      {
+        "Value": 4.244545454545454,
+        "Year": 1997
+      },
+      {
+        "Value": 6.42,
+        "Year": 1998
+      },
+      {
+        "Value": 4.361818181818182,
+        "Year": 1999
+      },
+      {
+        "Value": 3.045,
+        "Year": 2000
+      },
+      {
+        "Value": 3.796,
+        "Year": 2001
+      },
+      {
+        "Value": 4.747,
+        "Year": 2003
+      },
+      {
+        "Value": 3.192,
+        "Year": 2004
+      },
+      {
+        "Value": 2.326363636363636,
+        "Year": 2005
+      },
+      {
+        "Value": 3.26,
+        "Year": 2006
+      },
+      {
+        "Value": 2.980909090909091,
+        "Year": 2007
+      },
+      {
+        "Value": 1.9866666666666666,
+        "Year": 2008
+      },
+      {
+        "Value": 1.9579047618951468,
+        "Year": 2009
+      },
+      {
+        "Value": 2.0705714285676056,
+        "Year": 2010
+      },
+      {
+        "Value": 1.7936153846049607,
+        "Year": 2011
+      },
+      {
+        "Value": 1.2298799999910992,
+        "Year": 2012
+      },
+      {
+        "Value": 0.9657619047619047,
+        "Year": 2013
+      }
+    ],
     "data-5ff80b0f287c13829d81cbe7c2f75b10": [
       {
         "Date": "1992-08-22",
@@ -8282,31 +8369,50 @@
       }
     ]
   },
-  "encoding": {
-    "color": {
-      "field": "General_Location",
-      "legend": null,
-      "type": "nominal"
+  "layer": [
+    {
+      "data": {
+        "name": "data-5ff80b0f287c13829d81cbe7c2f75b10"
+      },
+      "encoding": {
+        "x": {
+          "field": "Year",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "Value",
+          "title": "Amount (Microgram per gram)",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "opacity": 0.7,
+        "size": 60,
+        "type": "circle"
+      }
     },
-    "row": {
-      "field": "General_Location",
-      "type": "nominal"
-    },
-    "x": {
-      "field": "Year",
-      "type": "nominal"
-    },
-    "y": {
-      "field": "Value",
-      "type": "quantitative"
+    {
+      "data": {
+        "name": "data-26af7b11a22a8c1e0c4ce98d418341be"
+      },
+      "encoding": {
+        "x": {
+          "field": "Year",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "Value",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "color": "red",
+        "type": "line"
+      }
     }
-  },
-  "height": 200,
-  "mark": {
-    "type": "point"
-  },
-  "width": 250
+  ]
 }
+
  ;  vegaEmbed("#chart4", spec4, { actions: true });
   </script>
 
