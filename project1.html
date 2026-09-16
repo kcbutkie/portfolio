@@ -19,9 +19,9 @@
     <header>
 		<nav>  
 			<ul>
-			</li><a href="index.html">Home</a>
-			</li><a href="project1.html">Project 1</a>
-			</li><a href="future.html">Future Projects</a>
+			<li><a href="index.html">Home</a>
+			<li><a href="project1.html">Project 1</a>
+			<li><a href="future.html">Future Projects</a>
 			</ul>
 		</nav>
 	</header>
@@ -29,7 +29,7 @@
         <strong> Chart 1</strong>
     </section>
   <!-- ============ CHART (worked example) ============ -->
-  
+  <section>
     <figure>
     <div id="chart1" class="chart"></div>
     <figcaption class="writeup">
@@ -38,8 +38,35 @@
       The three lakes are color-coded so that we can see the overall trend between all three lakes but also interpret some of the nuances between them. 
     </figcaption>
   </figure>
+	  </section>
 
+  <section>
+    <figure>
+    <div id="chart2" class="chart"></div>
+    <figcaption class="writeup">
+      This is where chart 2 will go.
+    </figcaption>
+  </figure>
+	  </section>
 
+	 <section>
+    <figure>
+    <div id="chart3" class="chart"></div>
+    <figcaption class="writeup">
+      This is where chart 3 will go.
+    </figcaption>
+  </figure>
+	  </section>
+
+ <section>
+    <figure>
+    <div id="chart4" class="chart"></div>
+    <figcaption class="writeup">
+      This is where chart 4 will go.
+    </figcaption>
+  </figure>
+	  </section>
+	
   <script>
     // Paste the output of Altair's  print(chart.to_json())  as each spec.
     // big blob of stuff goes here (replace the 3 dots)!! Without this, page won't load.
@@ -2115,9 +2142,9 @@
 
     // Then you can just add some more charts below.
     // Above you can add the div ids pointing to chart2, chart3, chart 4
-    // const spec2 = ... ;  vegaEmbed("#chart2", spec2, { actions: true });
-    // const spec3 = ... ;  vegaEmbed("#chart3", spec3, { actions: true });
-    // const spec4 = ... ;  vegaEmbed("#chart4", spec4, { actions: true });
+    const spec2 = ... ;  vegaEmbed("#chart2", spec2, { actions: true });
+    const spec3 = ... ;  vegaEmbed("#chart3", spec3, { actions: true });
+    const spec4 = ... ;  vegaEmbed("#chart4", spec4, { actions: true });
   </script>
 
 </body>
