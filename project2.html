@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="canonical" href="https://html5-templates.com/" />
+    <title>Project 1</title>
+    <meta name="description" content="Portfolio - Kace B">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+
+  <!-- Vega-Lite runtime. These three versions work together; the companion
+       Colab pins a matching Altair version so the spec you paste in below renders. -->
+  <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+<body>
+    <header>
+		<nav>  
+			<ul>
+			<li><a href="index.html">Home</a>
+			<li><a href="project1.html">Project 1</a>
+      <li><a href="project2.html">Project 2</a>
+			<li><a href="future.html">Future Projects</a>
+			</ul>
+		</nav>
+	</header>
+    <section>
+        <strong> Chart Glow-Up Assignment</strong>
+    </section>
+  <!-- ============ CHART (worked example) ============ -->
+</body>
+	<section>
+    <figure>
+    <div id="chart1" class="chart"></div>
+    <figcaption class="writeup">
+This chart was published by "Revista Autismo" magazine's editor-in-chief in April, 2025. There are many issues with this visual, such as:
+      - The use of fidget spinners to fill in the bar charts. Aside from the potential insensitivities that arise from using fidget spinners to represent autistic individuals, the usage of discrete objects for very small percentages is misleading. 
+      - The use of different colors for the bars. The colors aren't a third dimension or representative of any additional data, so it just adds to the visual clutter. 
+    </figcaption>
+  </figure>
+ </section>
+
+	<section>
+    <figure>
+    <div id="chart2" class="chart"></div>
+    <figcaption class="writeup">
+This new and improved chart has the same data, but displayed in a way that is much easier to understand.
+      There are no fidget spinners in this chart, so we can see exactly where each year's value lies. 
+      The X axis is also representative of the year of the data observations, which is more accurate to the data than the years the studies were published.
+    </figcaption>
+  </figure>
+	</section>
+
+	
+  <script>
+    // Paste the output of Altair's  print(chart.to_json())  as each spec.
+    // big blob of stuff goes here (replace the 3 dots)!! Without this, page won't load.
+    const spec2 = {{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+  "config": {
+    "axis": {
+      "labelFontSize": 12,
+      "titleFontSize": 14
+    },
+    "axisX": {
+      "labelAngle": 0
+    },
+    "title": {
+      "fontSize": 20
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "data": {
+    "name": "data-f18b1f9ed909163942bca6452ad02140"
+  },
+  "datasets": {
+    "data-f18b1f9ed909163942bca6452ad02140": [
+      {
+        "fraction": "1 in 150",
+        "percent": 0.66667,
+        "report": 2004,
+        "surveillance": 2000
+      },
+      {
+        "fraction": "1 in 150",
+        "percent": 0.66667,
+        "report": 2006,
+        "surveillance": 2002
+      },
+      {
+        "fraction": "1 in 125",
+        "percent": 0.8,
+        "report": 2008,
+        "surveillance": 2004
+      },
+      {
+        "fraction": "1 in 110",
+        "percent": 0.90909,
+        "report": 2010,
+        "surveillance": 2006
+      },
+      {
+        "fraction": "1 in 88",
+        "percent": 1.1364,
+        "report": 2012,
+        "surveillance": 2008
+      },
+      {
+        "fraction": "1 in 68",
+        "percent": 1.4706,
+        "report": 2014,
+        "surveillance": 2010
+      },
+      {
+        "fraction": "1 in 68",
+        "percent": 1.4706,
+        "report": 2016,
+        "surveillance": 2012
+      },
+      {
+        "fraction": "1 in 59",
+        "percent": 1.6949,
+        "report": 2018,
+        "surveillance": 2014
+      },
+      {
+        "fraction": "1 in 54",
+        "percent": 1.8519,
+        "report": 2020,
+        "surveillance": 2016
+      },
+      {
+        "fraction": "1 in 44",
+        "percent": 2.2727,
+        "report": 2021,
+        "surveillance": 2018
+      },
+      {
+        "fraction": "1 in 36",
+        "percent": 3.2258,
+        "report": 2023,
+        "surveillance": 2020
+      },
+      {
+        "fraction": "1 in 31",
+        "percent": null,
+        "report": 2025,
+        "surveillance": 2022
+      }
+    ]
+  },
+  "height": 440,
+  "layer": [
+    {
+      "encoding": {
+        "text": {
+          "field": "fraction",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "percent",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "surveillance",
+          "title": "Year",
+          "type": "ordinal"
+        },
+        "xOffset": {
+          "field": "group",
+          "scale": {
+            "paddingOuter": 0
+          },
+          "type": "nominal"
+        },
+        "y": {
+          "field": "percent",
+          "title": "Percent of 8-Year-Olds with Diagnosed Autism",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "type": "bar"
+      },
+      "name": "view_27",
+      "title": "Autism Diagnoses of 8-Year-Olds in the US"
+    },
+    {
+      "encoding": {
+        "text": {
+          "field": "fraction",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "percent",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "surveillance",
+          "title": "Year",
+          "type": "ordinal"
+        },
+        "xOffset": {
+          "field": "group",
+          "scale": {
+            "paddingOuter": 0
+          },
+          "type": "nominal"
+        },
+        "y": {
+          "field": "percent",
+          "title": "Percent of 8-Year-Olds with Diagnosed Autism",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "align": "center",
+        "dy": -5,
+        "type": "text"
+      },
+      "title": "Autism Diagnoses of 8-Year-Olds in the US"
+    }
+  ],
+  "params": [
+    {
+      "bind": "scales",
+      "name": "param_33",
+      "select": {
+        "encodings": [
+          "x",
+          "y"
+        ],
+        "type": "interval"
+      },
+      "views": [
+        "view_27"
+      ]
+    }
+  ],
+  "width": {
+    "step": 50
+  }
+}}
+ ;
+    vegaEmbed("#chart2", spec2, { actions: true });
