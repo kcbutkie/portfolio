@@ -42,6 +42,291 @@
 		</main>
 
 	</section>
+	<section>
+    <figure>
+    <div id="chart1" class="chart"></div>
+    <figcaption class="writeup">
+This is the regular chart and not misleading.
+
+    </figcaption>
+  </figure>
+	</section>
+
+	<section>
+    <figure>
+    <div id="chart2" class="chart"></div>
+    <figcaption class="writeup">
+This is the misleading chart.
+
+    </figcaption>
+  </figure>
+	</section>
+
+<script>
+	const spec1 = { {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+  "config": {
+    "axis": {
+      "labelFontSize": 12,
+      "titleFontSize": 14
+    },
+    "title": {
+      "fontSize": 18
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "data": {
+    "name": "data-2601b84aeb695f00c834dfca5636122b"
+  },
+  "datasets": {
+    "data-2601b84aeb695f00c834dfca5636122b": [
+      {
+        "Perc_change": 0.0317,
+        "Total": 1834690.1,
+        "Year": 2025
+      },
+      {
+        "Perc_change": 0.0285,
+        "Total": 1778376.73,
+        "Year": 2024
+      },
+      {
+        "Perc_change": -0.0198,
+        "Total": 1729139.13,
+        "Year": 2023
+      },
+      {
+        "Perc_change": 0.0177,
+        "Total": 1764067.41,
+        "Year": 2022
+      },
+      {
+        "Perc_change": 0.0234,
+        "Total": 1733415.18,
+        "Year": 2021
+      },
+      {
+        "Perc_change": 0.0342,
+        "Total": 1693860.24,
+        "Year": 2020
+      },
+      {
+        "Perc_change": 0.0453,
+        "Total": 1637880.7,
+        "Year": 2019
+      },
+      {
+        "Perc_change": 0.0524,
+        "Total": 1566903.43,
+        "Year": 2018
+      },
+      {
+        "Perc_change": 0.0595,
+        "Total": 1488895.48,
+        "Year": 2017
+      },
+      {
+        "Perc_change": 0.0644,
+        "Total": 1405332.16,
+        "Year": 2016
+      },
+      {
+        "Perc_change": 0.0684,
+        "Total": 1320248.14,
+        "Year": 2015
+      },
+      {
+        "Perc_change": 0.0787,
+        "Total": 1235751.47,
+        "Year": 2014
+      },
+      {
+        "Perc_change": 0.0863,
+        "Total": 1145550.75,
+        "Year": 2013
+      },
+      {
+        "Perc_change": 0.0987,
+        "Total": 1054565.11,
+        "Year": 2012
+      },
+      {
+        "Perc_change": 0.122,
+        "Total": 959823.95,
+        "Year": 2011
+      }
+    ]
+  },
+  "encoding": {
+    "tooltip": [
+      {
+        "field": "Year",
+        "type": "quantitative"
+      },
+      {
+        "field": "Total",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "field": "Year",
+      "type": "ordinal"
+    },
+    "y": {
+      "field": "Total",
+      "title": "Amount of Student Debt (in millions)",
+      "type": "quantitative"
+    }
+  },
+  "height": 500,
+  "mark": {
+    "point": true,
+    "type": "line"
+  },
+  "title": "Student Loan Debt in the US Over Time",
+  "width": 500
+}
+} ;
+	vegaEmbed("#chart1", spec1, { actions: true });
+
+	  const spec2 = { {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+  "config": {
+    "axis": {
+      "labelFontSize": 12,
+      "titleFontSize": 14
+    },
+    "title": {
+      "fontSize": 18
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "data": {
+    "name": "data-2601b84aeb695f00c834dfca5636122b"
+  },
+  "datasets": {
+    "data-2601b84aeb695f00c834dfca5636122b": [
+      {
+        "Perc_change": 0.0317,
+        "Total": 1834690.1,
+        "Year": 2025
+      },
+      {
+        "Perc_change": 0.0285,
+        "Total": 1778376.73,
+        "Year": 2024
+      },
+      {
+        "Perc_change": -0.0198,
+        "Total": 1729139.13,
+        "Year": 2023
+      },
+      {
+        "Perc_change": 0.0177,
+        "Total": 1764067.41,
+        "Year": 2022
+      },
+      {
+        "Perc_change": 0.0234,
+        "Total": 1733415.18,
+        "Year": 2021
+      },
+      {
+        "Perc_change": 0.0342,
+        "Total": 1693860.24,
+        "Year": 2020
+      },
+      {
+        "Perc_change": 0.0453,
+        "Total": 1637880.7,
+        "Year": 2019
+      },
+      {
+        "Perc_change": 0.0524,
+        "Total": 1566903.43,
+        "Year": 2018
+      },
+      {
+        "Perc_change": 0.0595,
+        "Total": 1488895.48,
+        "Year": 2017
+      },
+      {
+        "Perc_change": 0.0644,
+        "Total": 1405332.16,
+        "Year": 2016
+      },
+      {
+        "Perc_change": 0.0684,
+        "Total": 1320248.14,
+        "Year": 2015
+      },
+      {
+        "Perc_change": 0.0787,
+        "Total": 1235751.47,
+        "Year": 2014
+      },
+      {
+        "Perc_change": 0.0863,
+        "Total": 1145550.75,
+        "Year": 2013
+      },
+      {
+        "Perc_change": 0.0987,
+        "Total": 1054565.11,
+        "Year": 2012
+      },
+      {
+        "Perc_change": 0.122,
+        "Total": 959823.95,
+        "Year": 2011
+      }
+    ]
+  },
+  "encoding": {
+    "tooltip": [
+      {
+        "field": "Year",
+        "type": "quantitative"
+      },
+      {
+        "field": "Total",
+        "type": "quantitative"
+      },
+      {
+        "field": "Perc_change",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "field": "Year",
+      "type": "ordinal"
+    },
+    "y": {
+      "field": "Perc_change",
+      "title": "Change of Student Loan Debt",
+      "type": "quantitative"
+    }
+  },
+  "height": 500,
+  "mark": {
+    "point": true,
+    "type": "line"
+  },
+  "title": "Misleading Graph about Student Loan Debt Over Time",
+  "width": 500
+}
+} ;
+    vegaEmbed("#chart2", spec2, { actions: true });
+
+</script>
+
 	<footer>
 		<p> Template credit | <a href="https://html5-templates.com/" target="_blank" rel="nofollow">HTML5 Templates</a></p>
 
