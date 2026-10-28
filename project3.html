@@ -46,24 +46,49 @@
 	</section>
 
 	<section>
-    <figure>
-    <div id="chart1" class="chart"></div>
-    <figcaption class="writeup">
-This chart accurately shows the trend of student loan debt in the US from 2011-2025. 
-
-    </figcaption>
-  </figure>
+   		<figure>
+   			<div id="chart1" class="chart"></div>
+   			<figcaption class="writeup">
+				This chart accurately shows the trend of student loan debt in the US from 2011-2025. It is
+				important to note that the amounts are in millions, so the value for 2011, for example, is
+				actually about $960 billion.
+   			</figcaption>
+  		</figure>
 	</section>
 
 	<section>
 		<figure>
 			<div id="chart2" class="chart"></div>
 			<figcaption class="writeup">
-				This chart is technically accurate but is misleading with the data
+				This chart is technically accurate but is misleading with the data. By graphing the percent of
+				changes from one year to the next, it implies that the amount of outstanding student loans is
+				decreasing from 2011-2023, then increasing again in 2024-2025. As we can see from the accurate
+				chart above, that is not what is actually happening; the only year that saw a decrease in the
+				amount of student loan debt was 2023.
 			</figcaption>
 		</figure>
 	</section>
 
+	<section>
+		<article>
+			<p>
+				It was kind of difficult for me to decide on what to do to make a misleading visualization; I
+				initially started with trying to mess with the y-axis to distort the lines, (flipping the axis
+				to have the highest on the bottom, making the axis go up on a logarithmic scale, etc) but none
+				of the things that I tried looked 'natural' for lack of a better word. However, the data that
+				I chose to misrepresent is fairly straightforward (and not exactly nuanced), so that might have
+				been part of the issue as well.
+			</p>
+			<p>
+				When readers are looking at visualizations, it's important to read the labels on the axes
+				(assuming that they are labeled accurately) to fully understand what the visualization is
+				showing. It is also important to see if there are cited sources for where the data is pulled
+				from; if there are no cited sources, the data should be assumed to have been made up. If there
+				are cited sources, and if the visual is compelling enough to believe, it's always a good idea
+				to look up the original data to see if it is being depicted accurately.
+			</p>
+		</article>
+	</section>
 
   <script>
     // Paste the output of Altair's  print(chart.to_json())  as each spec. ex: const spec 1 = ...
@@ -182,7 +207,7 @@ This chart accurately shows the trend of student loan debt in the US from 2011-2
     },
     "y": {
       "field": "Total",
-      "title": "Amount of Student Debt (in millions)",
+      "title": "$ Amount of Student Debt (in millions)",
       "type": "quantitative"
     }
   },
