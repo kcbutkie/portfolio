@@ -32,8 +32,8 @@
 	<section>
 		<strong>Project 4 - Interactive Altair Charts</strong>
 	</section>
-	<section id="pageContent">
-		<main role="main">
+	<section>
+
 			<article>
 				<h2>Overview</h2>
 				<p>
@@ -45,10 +45,10 @@
 				</p>
 				<p>
 					These tutorials are based off of the example visuals found
-					on <a href="https://altair-viz.github.io/gallery/index.html#example-gallery">
+					on <a href="https://altair-viz.github.io/gallery/index.html#example-gallery" target="_blank">
 					Vega-Altair's example gallery</a>. However, the tutorial below goes further
 					in-depth about what to change in the code and some ways to customize the
-					interactive features without breaking them.
+					interactive features.
 				</p>
 				<p>
 					For these graphs, I used the data that I had pulled from the Google Trends time
@@ -62,43 +62,7871 @@
 				<h2>Initial Chart</h2>
 				<p>
 					Before adding in some interactivity, let's first create a simple scatterplot to show us what
-					we're working with.
+					we're working with. The code below is copy/pasted from a Google Colab notebook that can be
+					found at the bottom of this page if you'd like to see how the blocks were structured and
+					their corresponding outputs.
 				</p>
 			</article>
 			<p>
 					Code:
 			</p>
 			<pre>
-				style="font-family:courier;">
-				import altair as alt, pandas as pd
-				from google.colab import files
-				uploaded = files.upload()
+
+	import altair as alt, pandas as pd
+	from google.colab import files
+	uploaded = files.upload()
 			</pre>
-		</main>
+		<p>
+			After running this code, you can upload your data file into the Google Colab notebook.
+		</p>
+		<pre>
+
+	dataset = pd.read_csv("/content/time_series.csv")
+		</pre>
+		<p>
+			Replace the path within the quotation marks with the path to your uploaded dataset.
+		</p>
+		<pre>
+
+chart1 = alt.Chart(dataset).mark_circle(color="purple").encode(
+    x = alt.X("Blue:Q").title("Popularity of Searches for Blue"),
+    y = alt.Y("Red:Q").title("Popularity of Searches for Red"),
+    tooltip = ["Blue", "Red"]
+)
+chart1
+		</pre>
+<p>
+	This creates our scatterplot. Swap out everything that says Blue
+	with whatever search term you'd like on the X axis and swap out
+	everything that says Red with whatever search term you'd like
+	on the Y axis. You can also change the color from purple to
+	something else; I just didn't want the default blue when one of
+	my axes includes "Blue" to avoid any confusion.
+</p>
 	</section>
 
-	<section id="pageContent1">
-		<main role="main">
-			<article>
-
-			</article>
-		</main>
-	</section>
 	<section>
 		<figure>
 			<div id="chart1" class="chart"></div>
 			<figcaption class="writeup">
-			When we run the code, we get this plot.
+			When we run the code above, we get this plot.
+			</figcaption>
+		</figure>
+	</section>
+<section>
+	<article>
+		<h2>Interactivity 1: Layering Charts</h2>
+		<p>
+			The first interactivity we're looking at is adding a bar
+			that can be dragged across our graph to show the number
+			of points within the area. This shows one way to add
+			interactivity by creating 2 charts that are layered together
+			with a slider to switch between them. As you'll see in the
+			code, everything is tethered to the x-axis, but if the data
+			that you were using would be better shown with a bar going up
+			and down vertically, the code can be manipulated to be
+			tethered to the y-axis instead.
+		</p>
+		<p></p>
+		<p>
+			The code for this has four parts to it, but when you are running
+			the code, all four parts will go in the same Colab cell.
+		</p>
+
+		<pre>
+
+	slider = alt.binding_range(min = 0, max = 90, step = 1)
+	threshold = alt.param(name = "threshold", value = 0, bind = slider)
+		</pre>
+		<p>
+			This part creates the slider that will change the visual from
+			one graph type to another. For your data, change out the max
+			value from 90 to whatever the maximum value on your x-axis is.
+			If you make it too low, it won't slide across the entire graph,
+			and if you make it too high the slider will be able to slide right
+			off the graph. In the second line, changing the value from 0 will
+			change where your slider will start at when the graph first loads.
+			I have it set to 0 so that it starts on the y-axis, but you could
+			set it to start somewhere in the middle if you wanted.
+		</p>
+		<pre>
+
+alt.layer(
+    alt.Chart(dataset).mark_circle(color="purple").encode(
+   		x = alt.X("Blue:Q").title("Popularity of Searches for Blue"),
+    	y = alt.Y("Red:Q").title("Popularity of Searches for Red"),
+    	tooltip = ["Blue", "Red"]
+	).transform_filter(
+    	alt.datum["Blue"] >= threshold
+	),
+		</pre>
+		<p>
+			This block of code is practically identical to the block
+			we used earlier to create our scatterplot. The important
+			difference is the "transform_filter" at the end that will
+			filter it based on where our threshold bar is on the x-axis.
+
+		</p>
+		<pre>
+
+	alt.Chart(dataset).mark_circle(color="purple").encode(
+    	x = alt.X("Blue:Q").bin(maxbins=10),
+    	y = alt.Y("Red:Q").bin(maxbins=10),
+    	size = alt.Size("count():Q").scale(domain = [0, 60])
+    ).transform_filter(
+		alt.datum["Blue"] < threshold
+	),
+		</pre>
+		<p>
+			This block of code makes our second chart, which
+			in our case is showing the number of points in a
+			10x10 square. By changing the 'maxbins' number for
+			both the x and y, you can change the size of those
+			squares. In the line about size, the domain of the
+			scale may need to be changed depending on how
+			clustered your data is. And again, the
+			"transform_filter" will filter it based on where
+			the threshold bar is on the x-axis.
+		</p>
+		<pre>
+
+	alt.Chart().mark_rule(color = "gray").encode(
+   		strokeWidth = alt.StrokeWidth(value = 4),
+    	x = alt.X(datum = alt.expr(threshold.name), type = "quantitative")
+	)
+).add_params(threshold)
+		</pre>
+		<p>
+			This final part of the code will create our threshold
+			line. You can change the color and thickness of the
+			line if you like.
+		</p>
+
+	</article>
+</section>
+
+		<section>
+		<figure>
+			<div id="chart2" class="chart"></div>
+			<figcaption class="writeup">
+			When we run the code above, we get this interactive plot
+				where we can move the slider to move our threshold line.
+			</figcaption>
+		</figure>
+	</section>
+<section>
+	<article>
+		<h2>Interactivity 2: Stacking Charts</h2>
+		<p>
+			For this interactive visual, we'll create a heatmap of our data,
+			and allow the user to change the bin size by using the slider.
+			This isn't something that can be done with an easy change in the
+			creation of the visual itself, so what we can do is stack each
+			version on top of each other, then the slider chooses which one
+			to put on the top.
+		</p>
+		<p>
+			Similar to Interactivity 1, there are two parts to this code,
+			but both will be run in the same Colab cell.
+		</p>
+		<pre>
+
+maxbins_options = [10, 30, 50, 70, 90]
+
+slider = alt.binding_range(
+    min=min(maxbins_options),
+    max=max(maxbins_options),
+    step=20,
+    name="Max bins ",
+)
+maxbins = alt.param(name="maxbins", value=10, bind=slider)
+		</pre>
+		<p>
+			This code block creates the options of the bins and the slider
+			that will be used to switch between them. You could change how
+			many bins you want at each step and how many steps you offer,
+			just make sure that the step number in the slider equals the
+			space between each of your bin options.
+		</p>
+		<pre>
+
+layers = [
+    alt.Chart(dataset)
+    .mark_rect()
+    .encode(
+        alt.X("Red:Q")
+        .bin(maxbins=n)
+        .scale(zero=True)
+        .axis(format="d", title="Popularity of Searches for Red"),
+        alt.Y("Blue:Q")
+        .bin(maxbins=n)
+        .axis(format="d", title="Popularity of Searches for Blue"),
+        alt.Color("count():Q").scale(scheme="purples"),
+    )
+    .transform_filter(f"maxbins === {n}")
+    for n in maxbins_options
+]
+
+alt.layer(*layers).add_params(maxbins)
+		</pre>
+		<p>
+			This big block of code creates a new layer on the stack for each
+			of the bin options. The color scheme for the heatmap can be changed
+			if you don't want it to be purple.
+		</p>
+	</article>
+</section>
+
+			<section>
+		<figure>
+			<div id="chart3" class="chart"></div>
+			<figcaption class="writeup">
+			When we run the code above, we get this interactive plot
+				where the slider can be moved to change the bin size of
+				this heat map.
 			</figcaption>
 		</figure>
 	</section>
 
+<section>
+	<article>
+		<h2>Interactivity 3: Date Ranges</h2>
+		<p>
+			We can do more with visuals than just use sliders.
+			In this example, we'll look at how to interact with
+			a visual by added a time component to it. We will
+			add a start date and end date that can be selected by
+			the user to look at a specific time range of the data.
+
+		</p>
+		<p>
+			Once again, there are three parts to this code, but all
+			three will be run together in the same Colab cell.
+		</p>
+		<pre>
+
+start_date = alt.param(
+    name="start_date",
+    value="2004-01-01",
+    bind=alt.binding(input="date", name="Start date: "),
+)
+end_date = alt.param(
+    name="end_date",
+    value="2026-10-01",
+    bind=alt.binding(input="date", name="End date: "),
+)
+		</pre>
+		<p>
+			This creates a parameter to specify the start
+			date and end date for the data shown in the
+			visual. The dates listed for the start date and
+			end date values are the first and last dates in
+			the dataset that I am using; yours might be
+			different.
+		</p>
+		<pre>
+
+chart = (
+    alt.Chart(dataset)
+    .mark_circle(color="purple")
+    .encode(
+    x = alt.X("Blue:Q").title("Popularity of Searches for Blue"),
+    y = alt.Y("Red:Q").title("Popularity of Searches for Red"),
+        tooltip=[
+            alt.Tooltip("Time:T", title="Date"),
+        ],
+    )
+		</pre>
+		<p>
+			This section of code creates the scatterplot, again
+			looking very similar to the code from earlier. The
+			biggest difference is that our tooltip now shows us
+			the date that the point comes from. If your dataset
+			uses something other than "Time" for the date column,
+			you'll have to swap that out for the tooltip to work.
+		</p>
+		<pre>
+
+	.transform_filter(alt.datum.Time >= alt.expr.timeParse(start_date, "%Y-%m-%d"))
+    .transform_filter(alt.datum.Time <= alt.expr.timeParse(end_date, "%Y-%m-%d"))
+    .add_params(start_date)
+    .add_params(end_date)
+)
+chart
+		</pre>
+		<p>
+			These transform filters and added parameters will do the
+			start date and end date limitations that we're looking for.
+			Like before, if your dataset has a header for the date that
+			isn't "Time", you'll have to change that out in the
+			"transform_filter" lines.
+		</p>
+	</article>
+</section>
+
+			<section>
+		<figure>
+			<div id="chart4" class="chart"></div>
+			<figcaption class="writeup">
+			When we run the code above, we get this interactive plot where
+				you can select a start date and/or end date to filter out
+				certain datapoints.
+			</figcaption>
+		</figure>
+	</section>
+
+<section>
+	<article>
+		<h2>Interactivity 4: Window Selection</h2>
+		<p>
+			In this graph, we'll look at one final way to interact with
+			visuals by creating a window that selects all the points
+			within it, and can be tied to some other component. In our
+			case, we will show the average of the Red search popularity
+			within the window, but there are a lot of different ways that
+			this could be used outside of that.
+		</p>
+		<p>
+			Like the previous three examples, this one is broken into four
+			pieces, but all four pieces will be run together in the same
+			Colab cell.
+		</p>
+		<pre>
+
+brush = alt.selection_interval()
+		</pre>
+		<p>
+			This line of code creates the ability to make the window to select
+			certain data points.
+		</p>
+		<pre>
+
+chart = alt.Chart(dataset).mark_circle().encode(
+    x = alt.X("Blue:Q").title("Popularity of Searches for Blue"),
+    y = alt.Y("Red:Q").title("Popularity of Searches for Red"),
+    color = alt.when(brush).then(alt.value("purple")).otherwise(alt.value("grey")),
+    tooltip = ["Blue", "Red"]
+).add_params(brush)
+		</pre>
+		<p>
+			Again, this builds off the initial scatterplot we made with no
+			interactivity, but this time we're adding a color component that
+			changes when the points are within the window. You can change the
+			colors that the points will be if you want to.
+		</p>
+		<pre>
+
+line = alt.Chart(dataset).mark_rule(color="orange").encode(
+    y = "mean(Red):Q",
+    size = alt.SizeValue(2)
+).transform_filter(brush)
+		</pre>
+		<p>
+			This section creates our average line. Again, with
+			a different dataset or different goal in mind, the
+			average line can be swapped out for some other piece
+			that would be more insightful or useful. The size of
+			the line and color can be changed.
+		</p>
+		<pre>
+
+alt.layer(chart, line)
+		</pre>
+		<p>
+			This line of code ties together the scatterplot with
+			the average line.
+		</p>
+	</article>
+</section>
+
+		<section>
+		<figure>
+			<div id="chart5" class="chart"></div>
+			<figcaption class="writeup">
+			When we run the code above, we get this interactive plot
+				where you can click and drag to create a window of
+				selected points.
+			</figcaption>
+		</figure>
+	</section>
+
+<section>
+	<article>
+		<h2>Important Tips</h2>
+		<p>
+			If you're using a different dataset, make sure
+			that all the "Red"s and "Blue"s are swapped out
+			for your own data's x- and y-axis labels.
+		</p>
+		<p>
+			If you do get stuck, feel free to look at the
+			<a href="https://colab.research.google.com/drive/1YUHm-os4vYMZ2YLmMfUqprNZeGZ7kj6X?usp=sharing"
+			target="_blank">Google Colab notebook</a> to see if there is something
+			that was missed.
+		</p>
+		</article>
+	<article>
+		<h2>When to Use This Tool</h2>
+		<p>
+			If you're more comfortable working with something
+			that is familiar, or want to keep things consistent
+			and already have Altair visuals, these could be a
+			good way to add in some interactivity while using
+			Altair to create the visuals.
+		</p>
+	</article>
+</section>
+
+
+
+
+
+
+
+
+
+
 
 
 	<script>
-		// example: const specX = {...};
+		// example:
+		//const specX = ...;
 		// vegaEmbed("#chartX", specX, { actions: true });
-	const spec1 = {...}
+const spec5 = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+  "config": {
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "data": {
+    "name": "data-bd8392e8702b9d6da0876ad875e0d39e"
+  },
+  "datasets": {
+    "data-bd8392e8702b9d6da0876ad875e0d39e": [
+      {
+        "Blue": 18,
+        "Red": 23,
+        "Time": "2004-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 22,
+        "Time": "2004-04-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-05-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2004-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-08-01"
+      },
+      {
+        "Blue": 18,
+        "Red": 22,
+        "Time": "2004-09-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2004-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2004-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2004-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2005-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2005-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-10-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 25,
+        "Time": "2005-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2005-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-01-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2006-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-03-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-04-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-07-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2006-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2006-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2006-11-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 28,
+        "Time": "2006-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 26,
+        "Time": "2007-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2007-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2007-05-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 26,
+        "Time": "2007-07-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-08-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 25,
+        "Time": "2007-09-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 29,
+        "Time": "2007-10-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 28,
+        "Time": "2007-11-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2007-12-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-01-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2008-02-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-03-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-04-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2008-05-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-06-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 28,
+        "Time": "2008-07-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 26,
+        "Time": "2008-08-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2008-09-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 29,
+        "Time": "2008-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2008-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 31,
+        "Time": "2008-12-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 29,
+        "Time": "2009-01-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-03-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-04-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 30,
+        "Time": "2009-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 29,
+        "Time": "2009-06-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-07-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 28,
+        "Time": "2009-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-10-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 31,
+        "Time": "2009-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 34,
+        "Time": "2009-12-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-01-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 33,
+        "Time": "2010-03-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-04-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 32,
+        "Time": "2010-06-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 30,
+        "Time": "2010-07-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2010-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 34,
+        "Time": "2010-11-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 36,
+        "Time": "2010-12-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 35,
+        "Time": "2011-01-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 37,
+        "Time": "2011-02-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 36,
+        "Time": "2011-03-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 35,
+        "Time": "2011-04-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-05-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-06-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 36,
+        "Time": "2011-07-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-08-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 39,
+        "Time": "2011-10-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 38,
+        "Time": "2011-11-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 42,
+        "Time": "2011-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 40,
+        "Time": "2012-01-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-02-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 39,
+        "Time": "2012-03-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2012-04-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2012-05-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 40,
+        "Time": "2012-06-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 42,
+        "Time": "2012-07-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-08-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 40,
+        "Time": "2012-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 41,
+        "Time": "2012-10-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 43,
+        "Time": "2012-11-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 46,
+        "Time": "2012-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2013-01-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 46,
+        "Time": "2013-02-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 49,
+        "Time": "2013-03-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 42,
+        "Time": "2013-04-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2013-05-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-06-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 42,
+        "Time": "2013-07-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-08-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 41,
+        "Time": "2013-09-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 45,
+        "Time": "2013-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2013-11-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 47,
+        "Time": "2013-12-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 44,
+        "Time": "2014-01-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 45,
+        "Time": "2014-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-03-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 50,
+        "Time": "2014-04-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 46,
+        "Time": "2014-05-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 47,
+        "Time": "2014-06-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 45,
+        "Time": "2014-07-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 43,
+        "Time": "2014-08-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-09-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 46,
+        "Time": "2014-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 45,
+        "Time": "2014-11-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 48,
+        "Time": "2014-12-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2015-01-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 49,
+        "Time": "2015-02-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2015-03-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 46,
+        "Time": "2015-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 47,
+        "Time": "2015-05-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 46,
+        "Time": "2015-06-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 48,
+        "Time": "2015-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 45,
+        "Time": "2015-08-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 48,
+        "Time": "2015-09-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-10-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 49,
+        "Time": "2015-11-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-12-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 47,
+        "Time": "2016-01-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 49,
+        "Time": "2016-02-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 48,
+        "Time": "2016-03-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 49,
+        "Time": "2016-04-01"
+      },
+      {
+        "Blue": 45,
+        "Red": 49,
+        "Time": "2016-05-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-06-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 50,
+        "Time": "2016-07-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-08-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 47,
+        "Time": "2016-09-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 52,
+        "Time": "2016-10-01"
+      },
+      {
+        "Blue": 53,
+        "Red": 57,
+        "Time": "2016-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 63,
+        "Time": "2016-12-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 62,
+        "Time": "2017-01-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 68,
+        "Time": "2017-02-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 74,
+        "Time": "2017-03-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 76,
+        "Time": "2017-04-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 77,
+        "Time": "2017-05-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 69,
+        "Time": "2017-06-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 70,
+        "Time": "2017-07-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 65,
+        "Time": "2017-08-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 72,
+        "Time": "2017-09-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 77,
+        "Time": "2017-10-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 77,
+        "Time": "2017-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 76,
+        "Time": "2017-12-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 72,
+        "Time": "2018-01-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 64,
+        "Time": "2018-02-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 39,
+        "Time": "2018-03-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 33,
+        "Time": "2018-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 32,
+        "Time": "2018-05-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 30,
+        "Time": "2018-06-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 35,
+        "Time": "2018-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 34,
+        "Time": "2018-08-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-09-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-10-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 38,
+        "Time": "2018-11-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 39,
+        "Time": "2018-12-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 33,
+        "Time": "2019-01-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 34,
+        "Time": "2019-02-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 31,
+        "Time": "2019-03-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 29,
+        "Time": "2019-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 33,
+        "Time": "2019-05-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 42,
+        "Time": "2019-06-01"
+      },
+      {
+        "Blue": 48,
+        "Red": 37,
+        "Time": "2019-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2019-08-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 35,
+        "Time": "2019-09-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 38,
+        "Time": "2019-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2019-11-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 43,
+        "Time": "2019-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 37,
+        "Time": "2020-01-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 40,
+        "Time": "2020-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 32,
+        "Time": "2020-03-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 35,
+        "Time": "2020-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 38,
+        "Time": "2020-05-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2020-06-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 36,
+        "Time": "2020-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2020-08-01"
+      },
+      {
+        "Blue": 49,
+        "Red": 45,
+        "Time": "2020-09-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 45,
+        "Time": "2020-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-11-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 43,
+        "Time": "2021-01-01"
+      },
+      {
+        "Blue": 47,
+        "Red": 49,
+        "Time": "2021-02-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 50,
+        "Time": "2021-03-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 52,
+        "Time": "2021-04-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 54,
+        "Time": "2021-05-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 55,
+        "Time": "2021-06-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 61,
+        "Time": "2021-07-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 56,
+        "Time": "2021-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 65,
+        "Time": "2021-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 76,
+        "Time": "2021-10-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2021-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 77,
+        "Time": "2021-12-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 73,
+        "Time": "2022-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 73,
+        "Time": "2022-02-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 72,
+        "Time": "2022-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 74,
+        "Time": "2022-04-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 84,
+        "Time": "2022-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 81,
+        "Time": "2022-06-01"
+      },
+      {
+        "Blue": 78,
+        "Red": 89,
+        "Time": "2022-07-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2022-08-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 85,
+        "Time": "2022-09-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 87,
+        "Time": "2022-10-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 90,
+        "Time": "2022-11-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 94,
+        "Time": "2022-12-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 84,
+        "Time": "2023-01-01"
+      },
+      {
+        "Blue": 81,
+        "Red": 100,
+        "Time": "2023-02-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 89,
+        "Time": "2023-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 88,
+        "Time": "2023-04-01"
+      },
+      {
+        "Blue": 84,
+        "Red": 97,
+        "Time": "2023-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 89,
+        "Time": "2023-06-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2023-07-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 84,
+        "Time": "2023-08-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 80,
+        "Time": "2023-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 91,
+        "Time": "2023-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 92,
+        "Time": "2023-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 89,
+        "Time": "2023-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 78,
+        "Time": "2024-01-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2024-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 76,
+        "Time": "2024-03-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2024-04-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 78,
+        "Time": "2024-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2024-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 77,
+        "Time": "2024-07-01"
+      },
+      {
+        "Blue": 68,
+        "Red": 73,
+        "Time": "2024-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 81,
+        "Time": "2024-09-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 83,
+        "Time": "2024-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 89,
+        "Time": "2024-11-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 93,
+        "Time": "2024-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2025-01-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 83,
+        "Time": "2025-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 79,
+        "Time": "2025-03-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 81,
+        "Time": "2025-04-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 82,
+        "Time": "2025-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2025-06-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 85,
+        "Time": "2025-07-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 79,
+        "Time": "2025-08-01"
+      },
+      {
+        "Blue": 62,
+        "Red": 75,
+        "Time": "2025-09-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 81,
+        "Time": "2025-10-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 93,
+        "Time": "2025-11-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 98,
+        "Time": "2025-12-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 91,
+        "Time": "2026-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 98,
+        "Time": "2026-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 88,
+        "Time": "2026-03-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 94,
+        "Time": "2026-04-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 95,
+        "Time": "2026-05-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 91,
+        "Time": "2026-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 94,
+        "Time": "2026-07-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 85,
+        "Time": "2026-08-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 84,
+        "Time": "2026-09-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 86,
+        "Time": "2026-10-01"
+      }
+    ]
+  },
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "condition": [
+            {
+              "param": "param_5",
+              "value": "purple"
+            }
+          ],
+          "value": "grey"
+        },
+        "tooltip": [
+          {
+            "field": "Blue",
+            "type": "quantitative"
+          },
+          {
+            "field": "Red",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "Blue",
+          "title": "Popularity of Searches for Blue",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "Red",
+          "title": "Popularity of Searches for Red",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "type": "circle"
+      },
+      "name": "view_5"
+    },
+    {
+      "encoding": {
+        "size": {
+          "value": 2
+        },
+        "y": {
+          "aggregate": "mean",
+          "field": "Red",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "color": "orange",
+        "type": "rule"
+      },
+      "transform": [
+        {
+          "filter": {
+            "param": "param_5"
+          }
+        }
+      ]
+    }
+  ],
+  "params": [
+    {
+      "name": "param_5",
+      "select": {
+        "type": "interval"
+      },
+      "views": [
+        "view_5"
+      ]
+    }
+  ]
+}
+;
+vegaEmbed("#chart5", spec5, { actions: true });
+
+const spec4 = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+  "config": {
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "data": {
+    "name": "data-bd8392e8702b9d6da0876ad875e0d39e"
+  },
+  "datasets": {
+    "data-bd8392e8702b9d6da0876ad875e0d39e": [
+      {
+        "Blue": 18,
+        "Red": 23,
+        "Time": "2004-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 22,
+        "Time": "2004-04-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-05-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2004-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-08-01"
+      },
+      {
+        "Blue": 18,
+        "Red": 22,
+        "Time": "2004-09-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2004-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2004-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2004-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2005-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2005-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-10-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 25,
+        "Time": "2005-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2005-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-01-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2006-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-03-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-04-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-07-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2006-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2006-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2006-11-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 28,
+        "Time": "2006-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 26,
+        "Time": "2007-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2007-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2007-05-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 26,
+        "Time": "2007-07-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-08-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 25,
+        "Time": "2007-09-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 29,
+        "Time": "2007-10-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 28,
+        "Time": "2007-11-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2007-12-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-01-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2008-02-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-03-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-04-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2008-05-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-06-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 28,
+        "Time": "2008-07-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 26,
+        "Time": "2008-08-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2008-09-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 29,
+        "Time": "2008-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2008-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 31,
+        "Time": "2008-12-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 29,
+        "Time": "2009-01-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-03-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-04-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 30,
+        "Time": "2009-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 29,
+        "Time": "2009-06-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-07-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 28,
+        "Time": "2009-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-10-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 31,
+        "Time": "2009-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 34,
+        "Time": "2009-12-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-01-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 33,
+        "Time": "2010-03-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-04-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 32,
+        "Time": "2010-06-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 30,
+        "Time": "2010-07-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2010-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 34,
+        "Time": "2010-11-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 36,
+        "Time": "2010-12-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 35,
+        "Time": "2011-01-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 37,
+        "Time": "2011-02-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 36,
+        "Time": "2011-03-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 35,
+        "Time": "2011-04-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-05-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-06-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 36,
+        "Time": "2011-07-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-08-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 39,
+        "Time": "2011-10-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 38,
+        "Time": "2011-11-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 42,
+        "Time": "2011-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 40,
+        "Time": "2012-01-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-02-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 39,
+        "Time": "2012-03-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2012-04-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2012-05-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 40,
+        "Time": "2012-06-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 42,
+        "Time": "2012-07-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-08-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 40,
+        "Time": "2012-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 41,
+        "Time": "2012-10-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 43,
+        "Time": "2012-11-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 46,
+        "Time": "2012-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2013-01-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 46,
+        "Time": "2013-02-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 49,
+        "Time": "2013-03-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 42,
+        "Time": "2013-04-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2013-05-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-06-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 42,
+        "Time": "2013-07-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-08-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 41,
+        "Time": "2013-09-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 45,
+        "Time": "2013-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2013-11-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 47,
+        "Time": "2013-12-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 44,
+        "Time": "2014-01-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 45,
+        "Time": "2014-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-03-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 50,
+        "Time": "2014-04-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 46,
+        "Time": "2014-05-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 47,
+        "Time": "2014-06-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 45,
+        "Time": "2014-07-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 43,
+        "Time": "2014-08-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-09-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 46,
+        "Time": "2014-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 45,
+        "Time": "2014-11-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 48,
+        "Time": "2014-12-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2015-01-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 49,
+        "Time": "2015-02-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2015-03-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 46,
+        "Time": "2015-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 47,
+        "Time": "2015-05-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 46,
+        "Time": "2015-06-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 48,
+        "Time": "2015-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 45,
+        "Time": "2015-08-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 48,
+        "Time": "2015-09-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-10-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 49,
+        "Time": "2015-11-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-12-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 47,
+        "Time": "2016-01-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 49,
+        "Time": "2016-02-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 48,
+        "Time": "2016-03-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 49,
+        "Time": "2016-04-01"
+      },
+      {
+        "Blue": 45,
+        "Red": 49,
+        "Time": "2016-05-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-06-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 50,
+        "Time": "2016-07-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-08-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 47,
+        "Time": "2016-09-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 52,
+        "Time": "2016-10-01"
+      },
+      {
+        "Blue": 53,
+        "Red": 57,
+        "Time": "2016-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 63,
+        "Time": "2016-12-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 62,
+        "Time": "2017-01-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 68,
+        "Time": "2017-02-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 74,
+        "Time": "2017-03-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 76,
+        "Time": "2017-04-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 77,
+        "Time": "2017-05-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 69,
+        "Time": "2017-06-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 70,
+        "Time": "2017-07-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 65,
+        "Time": "2017-08-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 72,
+        "Time": "2017-09-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 77,
+        "Time": "2017-10-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 77,
+        "Time": "2017-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 76,
+        "Time": "2017-12-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 72,
+        "Time": "2018-01-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 64,
+        "Time": "2018-02-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 39,
+        "Time": "2018-03-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 33,
+        "Time": "2018-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 32,
+        "Time": "2018-05-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 30,
+        "Time": "2018-06-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 35,
+        "Time": "2018-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 34,
+        "Time": "2018-08-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-09-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-10-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 38,
+        "Time": "2018-11-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 39,
+        "Time": "2018-12-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 33,
+        "Time": "2019-01-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 34,
+        "Time": "2019-02-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 31,
+        "Time": "2019-03-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 29,
+        "Time": "2019-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 33,
+        "Time": "2019-05-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 42,
+        "Time": "2019-06-01"
+      },
+      {
+        "Blue": 48,
+        "Red": 37,
+        "Time": "2019-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2019-08-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 35,
+        "Time": "2019-09-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 38,
+        "Time": "2019-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2019-11-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 43,
+        "Time": "2019-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 37,
+        "Time": "2020-01-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 40,
+        "Time": "2020-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 32,
+        "Time": "2020-03-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 35,
+        "Time": "2020-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 38,
+        "Time": "2020-05-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2020-06-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 36,
+        "Time": "2020-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2020-08-01"
+      },
+      {
+        "Blue": 49,
+        "Red": 45,
+        "Time": "2020-09-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 45,
+        "Time": "2020-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-11-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 43,
+        "Time": "2021-01-01"
+      },
+      {
+        "Blue": 47,
+        "Red": 49,
+        "Time": "2021-02-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 50,
+        "Time": "2021-03-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 52,
+        "Time": "2021-04-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 54,
+        "Time": "2021-05-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 55,
+        "Time": "2021-06-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 61,
+        "Time": "2021-07-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 56,
+        "Time": "2021-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 65,
+        "Time": "2021-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 76,
+        "Time": "2021-10-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2021-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 77,
+        "Time": "2021-12-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 73,
+        "Time": "2022-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 73,
+        "Time": "2022-02-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 72,
+        "Time": "2022-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 74,
+        "Time": "2022-04-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 84,
+        "Time": "2022-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 81,
+        "Time": "2022-06-01"
+      },
+      {
+        "Blue": 78,
+        "Red": 89,
+        "Time": "2022-07-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2022-08-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 85,
+        "Time": "2022-09-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 87,
+        "Time": "2022-10-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 90,
+        "Time": "2022-11-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 94,
+        "Time": "2022-12-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 84,
+        "Time": "2023-01-01"
+      },
+      {
+        "Blue": 81,
+        "Red": 100,
+        "Time": "2023-02-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 89,
+        "Time": "2023-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 88,
+        "Time": "2023-04-01"
+      },
+      {
+        "Blue": 84,
+        "Red": 97,
+        "Time": "2023-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 89,
+        "Time": "2023-06-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2023-07-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 84,
+        "Time": "2023-08-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 80,
+        "Time": "2023-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 91,
+        "Time": "2023-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 92,
+        "Time": "2023-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 89,
+        "Time": "2023-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 78,
+        "Time": "2024-01-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2024-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 76,
+        "Time": "2024-03-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2024-04-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 78,
+        "Time": "2024-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2024-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 77,
+        "Time": "2024-07-01"
+      },
+      {
+        "Blue": 68,
+        "Red": 73,
+        "Time": "2024-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 81,
+        "Time": "2024-09-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 83,
+        "Time": "2024-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 89,
+        "Time": "2024-11-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 93,
+        "Time": "2024-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2025-01-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 83,
+        "Time": "2025-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 79,
+        "Time": "2025-03-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 81,
+        "Time": "2025-04-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 82,
+        "Time": "2025-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2025-06-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 85,
+        "Time": "2025-07-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 79,
+        "Time": "2025-08-01"
+      },
+      {
+        "Blue": 62,
+        "Red": 75,
+        "Time": "2025-09-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 81,
+        "Time": "2025-10-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 93,
+        "Time": "2025-11-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 98,
+        "Time": "2025-12-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 91,
+        "Time": "2026-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 98,
+        "Time": "2026-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 88,
+        "Time": "2026-03-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 94,
+        "Time": "2026-04-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 95,
+        "Time": "2026-05-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 91,
+        "Time": "2026-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 94,
+        "Time": "2026-07-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 85,
+        "Time": "2026-08-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 84,
+        "Time": "2026-09-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 86,
+        "Time": "2026-10-01"
+      }
+    ]
+  },
+  "encoding": {
+    "tooltip": [
+      {
+        "field": "Time",
+        "title": "Date",
+        "type": "temporal"
+      }
+    ],
+    "x": {
+      "field": "Blue",
+      "title": "Popularity of Searches for Blue",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "Red",
+      "title": "Popularity of Searches for Red",
+      "type": "quantitative"
+    }
+  },
+  "mark": {
+    "color": "purple",
+    "type": "circle"
+  },
+  "params": [
+    {
+      "bind": {
+        "input": "date",
+        "name": "Start date: "
+      },
+      "name": "start_date",
+      "value": "2004-01-01"
+    },
+    {
+      "bind": {
+        "input": "date",
+        "name": "End date: "
+      },
+      "name": "end_date",
+      "value": "2026-10-01"
+    }
+  ],
+  "transform": [
+    {
+      "filter": "(datum.Time >= timeParse(start_date,'%Y-%m-%d'))"
+    },
+    {
+      "filter": "(datum.Time <= timeParse(end_date,'%Y-%m-%d'))"
+    }
+  ]
+}
+;
+vegaEmbed("#chart4", spec4, { actions: true });
+
+const spec3 = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+  "config": {
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "data": {
+    "name": "data-bd8392e8702b9d6da0876ad875e0d39e"
+  },
+  "datasets": {
+    "data-bd8392e8702b9d6da0876ad875e0d39e": [
+      {
+        "Blue": 18,
+        "Red": 23,
+        "Time": "2004-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 22,
+        "Time": "2004-04-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-05-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2004-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-08-01"
+      },
+      {
+        "Blue": 18,
+        "Red": 22,
+        "Time": "2004-09-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2004-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2004-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2004-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2005-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2005-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-10-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 25,
+        "Time": "2005-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2005-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-01-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2006-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-03-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-04-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-07-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2006-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2006-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2006-11-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 28,
+        "Time": "2006-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 26,
+        "Time": "2007-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2007-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2007-05-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 26,
+        "Time": "2007-07-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-08-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 25,
+        "Time": "2007-09-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 29,
+        "Time": "2007-10-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 28,
+        "Time": "2007-11-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2007-12-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-01-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2008-02-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-03-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-04-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2008-05-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-06-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 28,
+        "Time": "2008-07-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 26,
+        "Time": "2008-08-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2008-09-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 29,
+        "Time": "2008-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2008-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 31,
+        "Time": "2008-12-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 29,
+        "Time": "2009-01-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-03-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-04-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 30,
+        "Time": "2009-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 29,
+        "Time": "2009-06-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-07-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 28,
+        "Time": "2009-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-10-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 31,
+        "Time": "2009-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 34,
+        "Time": "2009-12-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-01-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 33,
+        "Time": "2010-03-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-04-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 32,
+        "Time": "2010-06-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 30,
+        "Time": "2010-07-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2010-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 34,
+        "Time": "2010-11-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 36,
+        "Time": "2010-12-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 35,
+        "Time": "2011-01-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 37,
+        "Time": "2011-02-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 36,
+        "Time": "2011-03-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 35,
+        "Time": "2011-04-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-05-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-06-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 36,
+        "Time": "2011-07-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-08-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 39,
+        "Time": "2011-10-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 38,
+        "Time": "2011-11-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 42,
+        "Time": "2011-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 40,
+        "Time": "2012-01-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-02-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 39,
+        "Time": "2012-03-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2012-04-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2012-05-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 40,
+        "Time": "2012-06-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 42,
+        "Time": "2012-07-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-08-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 40,
+        "Time": "2012-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 41,
+        "Time": "2012-10-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 43,
+        "Time": "2012-11-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 46,
+        "Time": "2012-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2013-01-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 46,
+        "Time": "2013-02-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 49,
+        "Time": "2013-03-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 42,
+        "Time": "2013-04-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2013-05-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-06-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 42,
+        "Time": "2013-07-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-08-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 41,
+        "Time": "2013-09-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 45,
+        "Time": "2013-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2013-11-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 47,
+        "Time": "2013-12-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 44,
+        "Time": "2014-01-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 45,
+        "Time": "2014-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-03-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 50,
+        "Time": "2014-04-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 46,
+        "Time": "2014-05-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 47,
+        "Time": "2014-06-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 45,
+        "Time": "2014-07-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 43,
+        "Time": "2014-08-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-09-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 46,
+        "Time": "2014-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 45,
+        "Time": "2014-11-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 48,
+        "Time": "2014-12-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2015-01-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 49,
+        "Time": "2015-02-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2015-03-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 46,
+        "Time": "2015-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 47,
+        "Time": "2015-05-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 46,
+        "Time": "2015-06-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 48,
+        "Time": "2015-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 45,
+        "Time": "2015-08-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 48,
+        "Time": "2015-09-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-10-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 49,
+        "Time": "2015-11-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-12-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 47,
+        "Time": "2016-01-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 49,
+        "Time": "2016-02-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 48,
+        "Time": "2016-03-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 49,
+        "Time": "2016-04-01"
+      },
+      {
+        "Blue": 45,
+        "Red": 49,
+        "Time": "2016-05-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-06-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 50,
+        "Time": "2016-07-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-08-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 47,
+        "Time": "2016-09-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 52,
+        "Time": "2016-10-01"
+      },
+      {
+        "Blue": 53,
+        "Red": 57,
+        "Time": "2016-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 63,
+        "Time": "2016-12-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 62,
+        "Time": "2017-01-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 68,
+        "Time": "2017-02-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 74,
+        "Time": "2017-03-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 76,
+        "Time": "2017-04-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 77,
+        "Time": "2017-05-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 69,
+        "Time": "2017-06-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 70,
+        "Time": "2017-07-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 65,
+        "Time": "2017-08-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 72,
+        "Time": "2017-09-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 77,
+        "Time": "2017-10-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 77,
+        "Time": "2017-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 76,
+        "Time": "2017-12-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 72,
+        "Time": "2018-01-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 64,
+        "Time": "2018-02-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 39,
+        "Time": "2018-03-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 33,
+        "Time": "2018-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 32,
+        "Time": "2018-05-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 30,
+        "Time": "2018-06-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 35,
+        "Time": "2018-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 34,
+        "Time": "2018-08-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-09-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-10-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 38,
+        "Time": "2018-11-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 39,
+        "Time": "2018-12-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 33,
+        "Time": "2019-01-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 34,
+        "Time": "2019-02-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 31,
+        "Time": "2019-03-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 29,
+        "Time": "2019-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 33,
+        "Time": "2019-05-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 42,
+        "Time": "2019-06-01"
+      },
+      {
+        "Blue": 48,
+        "Red": 37,
+        "Time": "2019-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2019-08-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 35,
+        "Time": "2019-09-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 38,
+        "Time": "2019-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2019-11-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 43,
+        "Time": "2019-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 37,
+        "Time": "2020-01-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 40,
+        "Time": "2020-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 32,
+        "Time": "2020-03-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 35,
+        "Time": "2020-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 38,
+        "Time": "2020-05-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2020-06-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 36,
+        "Time": "2020-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2020-08-01"
+      },
+      {
+        "Blue": 49,
+        "Red": 45,
+        "Time": "2020-09-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 45,
+        "Time": "2020-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-11-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 43,
+        "Time": "2021-01-01"
+      },
+      {
+        "Blue": 47,
+        "Red": 49,
+        "Time": "2021-02-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 50,
+        "Time": "2021-03-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 52,
+        "Time": "2021-04-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 54,
+        "Time": "2021-05-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 55,
+        "Time": "2021-06-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 61,
+        "Time": "2021-07-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 56,
+        "Time": "2021-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 65,
+        "Time": "2021-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 76,
+        "Time": "2021-10-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2021-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 77,
+        "Time": "2021-12-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 73,
+        "Time": "2022-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 73,
+        "Time": "2022-02-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 72,
+        "Time": "2022-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 74,
+        "Time": "2022-04-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 84,
+        "Time": "2022-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 81,
+        "Time": "2022-06-01"
+      },
+      {
+        "Blue": 78,
+        "Red": 89,
+        "Time": "2022-07-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2022-08-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 85,
+        "Time": "2022-09-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 87,
+        "Time": "2022-10-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 90,
+        "Time": "2022-11-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 94,
+        "Time": "2022-12-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 84,
+        "Time": "2023-01-01"
+      },
+      {
+        "Blue": 81,
+        "Red": 100,
+        "Time": "2023-02-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 89,
+        "Time": "2023-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 88,
+        "Time": "2023-04-01"
+      },
+      {
+        "Blue": 84,
+        "Red": 97,
+        "Time": "2023-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 89,
+        "Time": "2023-06-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2023-07-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 84,
+        "Time": "2023-08-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 80,
+        "Time": "2023-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 91,
+        "Time": "2023-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 92,
+        "Time": "2023-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 89,
+        "Time": "2023-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 78,
+        "Time": "2024-01-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2024-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 76,
+        "Time": "2024-03-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2024-04-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 78,
+        "Time": "2024-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2024-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 77,
+        "Time": "2024-07-01"
+      },
+      {
+        "Blue": 68,
+        "Red": 73,
+        "Time": "2024-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 81,
+        "Time": "2024-09-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 83,
+        "Time": "2024-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 89,
+        "Time": "2024-11-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 93,
+        "Time": "2024-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2025-01-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 83,
+        "Time": "2025-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 79,
+        "Time": "2025-03-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 81,
+        "Time": "2025-04-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 82,
+        "Time": "2025-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2025-06-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 85,
+        "Time": "2025-07-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 79,
+        "Time": "2025-08-01"
+      },
+      {
+        "Blue": 62,
+        "Red": 75,
+        "Time": "2025-09-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 81,
+        "Time": "2025-10-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 93,
+        "Time": "2025-11-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 98,
+        "Time": "2025-12-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 91,
+        "Time": "2026-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 98,
+        "Time": "2026-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 88,
+        "Time": "2026-03-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 94,
+        "Time": "2026-04-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 95,
+        "Time": "2026-05-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 91,
+        "Time": "2026-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 94,
+        "Time": "2026-07-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 85,
+        "Time": "2026-08-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 84,
+        "Time": "2026-09-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 86,
+        "Time": "2026-10-01"
+      }
+    ]
+  },
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "aggregate": "count",
+          "scale": {
+            "scheme": "purples"
+          },
+          "type": "quantitative"
+        },
+        "x": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Red"
+          },
+          "bin": {
+            "maxbins": 10
+          },
+          "field": "Red",
+          "scale": {
+            "zero": true
+          },
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Blue"
+          },
+          "bin": {
+            "maxbins": 10
+          },
+          "field": "Blue",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "type": "rect"
+      },
+      "transform": [
+        {
+          "filter": "maxbins === 10"
+        }
+      ]
+    },
+    {
+      "encoding": {
+        "color": {
+          "aggregate": "count",
+          "scale": {
+            "scheme": "purples"
+          },
+          "type": "quantitative"
+        },
+        "x": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Red"
+          },
+          "bin": {
+            "maxbins": 30
+          },
+          "field": "Red",
+          "scale": {
+            "zero": true
+          },
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Blue"
+          },
+          "bin": {
+            "maxbins": 30
+          },
+          "field": "Blue",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "type": "rect"
+      },
+      "transform": [
+        {
+          "filter": "maxbins === 30"
+        }
+      ]
+    },
+    {
+      "encoding": {
+        "color": {
+          "aggregate": "count",
+          "scale": {
+            "scheme": "purples"
+          },
+          "type": "quantitative"
+        },
+        "x": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Red"
+          },
+          "bin": {
+            "maxbins": 50
+          },
+          "field": "Red",
+          "scale": {
+            "zero": true
+          },
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Blue"
+          },
+          "bin": {
+            "maxbins": 50
+          },
+          "field": "Blue",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "type": "rect"
+      },
+      "transform": [
+        {
+          "filter": "maxbins === 50"
+        }
+      ]
+    },
+    {
+      "encoding": {
+        "color": {
+          "aggregate": "count",
+          "scale": {
+            "scheme": "purples"
+          },
+          "type": "quantitative"
+        },
+        "x": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Red"
+          },
+          "bin": {
+            "maxbins": 70
+          },
+          "field": "Red",
+          "scale": {
+            "zero": true
+          },
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Blue"
+          },
+          "bin": {
+            "maxbins": 70
+          },
+          "field": "Blue",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "type": "rect"
+      },
+      "transform": [
+        {
+          "filter": "maxbins === 70"
+        }
+      ]
+    },
+    {
+      "encoding": {
+        "color": {
+          "aggregate": "count",
+          "scale": {
+            "scheme": "purples"
+          },
+          "type": "quantitative"
+        },
+        "x": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Red"
+          },
+          "bin": {
+            "maxbins": 90
+          },
+          "field": "Red",
+          "scale": {
+            "zero": true
+          },
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "format": "d",
+            "title": "Popularity of Searches for Blue"
+          },
+          "bin": {
+            "maxbins": 90
+          },
+          "field": "Blue",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "type": "rect"
+      },
+      "transform": [
+        {
+          "filter": "maxbins === 90"
+        }
+      ]
+    }
+  ],
+  "params": [
+    {
+      "bind": {
+        "input": "range",
+        "max": 90,
+        "min": 10,
+        "name": "Max bins ",
+        "step": 20
+      },
+      "name": "maxbins",
+      "value": 10
+    }
+  ]
+}
+;
+vegaEmbed("#chart3", spec3, { actions: true });
+
+		const spec2 = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+  "config": {
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "datasets": {
+    "data-bd8392e8702b9d6da0876ad875e0d39e": [
+      {
+        "Blue": 18,
+        "Red": 23,
+        "Time": "2004-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 22,
+        "Time": "2004-04-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-05-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2004-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-08-01"
+      },
+      {
+        "Blue": 18,
+        "Red": 22,
+        "Time": "2004-09-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2004-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2004-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2004-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2005-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2005-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-10-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 25,
+        "Time": "2005-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2005-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-01-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2006-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-03-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-04-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-07-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2006-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2006-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2006-11-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 28,
+        "Time": "2006-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 26,
+        "Time": "2007-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2007-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2007-05-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 26,
+        "Time": "2007-07-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-08-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 25,
+        "Time": "2007-09-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 29,
+        "Time": "2007-10-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 28,
+        "Time": "2007-11-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2007-12-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-01-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2008-02-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-03-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-04-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2008-05-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-06-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 28,
+        "Time": "2008-07-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 26,
+        "Time": "2008-08-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2008-09-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 29,
+        "Time": "2008-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2008-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 31,
+        "Time": "2008-12-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 29,
+        "Time": "2009-01-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-03-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-04-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 30,
+        "Time": "2009-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 29,
+        "Time": "2009-06-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-07-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 28,
+        "Time": "2009-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-10-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 31,
+        "Time": "2009-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 34,
+        "Time": "2009-12-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-01-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 33,
+        "Time": "2010-03-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-04-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 32,
+        "Time": "2010-06-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 30,
+        "Time": "2010-07-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2010-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 34,
+        "Time": "2010-11-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 36,
+        "Time": "2010-12-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 35,
+        "Time": "2011-01-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 37,
+        "Time": "2011-02-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 36,
+        "Time": "2011-03-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 35,
+        "Time": "2011-04-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-05-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-06-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 36,
+        "Time": "2011-07-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-08-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 39,
+        "Time": "2011-10-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 38,
+        "Time": "2011-11-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 42,
+        "Time": "2011-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 40,
+        "Time": "2012-01-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-02-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 39,
+        "Time": "2012-03-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2012-04-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2012-05-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 40,
+        "Time": "2012-06-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 42,
+        "Time": "2012-07-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-08-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 40,
+        "Time": "2012-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 41,
+        "Time": "2012-10-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 43,
+        "Time": "2012-11-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 46,
+        "Time": "2012-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2013-01-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 46,
+        "Time": "2013-02-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 49,
+        "Time": "2013-03-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 42,
+        "Time": "2013-04-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2013-05-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-06-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 42,
+        "Time": "2013-07-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-08-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 41,
+        "Time": "2013-09-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 45,
+        "Time": "2013-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2013-11-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 47,
+        "Time": "2013-12-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 44,
+        "Time": "2014-01-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 45,
+        "Time": "2014-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-03-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 50,
+        "Time": "2014-04-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 46,
+        "Time": "2014-05-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 47,
+        "Time": "2014-06-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 45,
+        "Time": "2014-07-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 43,
+        "Time": "2014-08-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-09-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 46,
+        "Time": "2014-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 45,
+        "Time": "2014-11-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 48,
+        "Time": "2014-12-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2015-01-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 49,
+        "Time": "2015-02-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2015-03-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 46,
+        "Time": "2015-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 47,
+        "Time": "2015-05-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 46,
+        "Time": "2015-06-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 48,
+        "Time": "2015-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 45,
+        "Time": "2015-08-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 48,
+        "Time": "2015-09-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-10-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 49,
+        "Time": "2015-11-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-12-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 47,
+        "Time": "2016-01-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 49,
+        "Time": "2016-02-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 48,
+        "Time": "2016-03-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 49,
+        "Time": "2016-04-01"
+      },
+      {
+        "Blue": 45,
+        "Red": 49,
+        "Time": "2016-05-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-06-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 50,
+        "Time": "2016-07-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-08-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 47,
+        "Time": "2016-09-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 52,
+        "Time": "2016-10-01"
+      },
+      {
+        "Blue": 53,
+        "Red": 57,
+        "Time": "2016-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 63,
+        "Time": "2016-12-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 62,
+        "Time": "2017-01-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 68,
+        "Time": "2017-02-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 74,
+        "Time": "2017-03-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 76,
+        "Time": "2017-04-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 77,
+        "Time": "2017-05-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 69,
+        "Time": "2017-06-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 70,
+        "Time": "2017-07-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 65,
+        "Time": "2017-08-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 72,
+        "Time": "2017-09-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 77,
+        "Time": "2017-10-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 77,
+        "Time": "2017-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 76,
+        "Time": "2017-12-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 72,
+        "Time": "2018-01-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 64,
+        "Time": "2018-02-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 39,
+        "Time": "2018-03-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 33,
+        "Time": "2018-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 32,
+        "Time": "2018-05-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 30,
+        "Time": "2018-06-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 35,
+        "Time": "2018-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 34,
+        "Time": "2018-08-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-09-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-10-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 38,
+        "Time": "2018-11-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 39,
+        "Time": "2018-12-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 33,
+        "Time": "2019-01-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 34,
+        "Time": "2019-02-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 31,
+        "Time": "2019-03-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 29,
+        "Time": "2019-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 33,
+        "Time": "2019-05-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 42,
+        "Time": "2019-06-01"
+      },
+      {
+        "Blue": 48,
+        "Red": 37,
+        "Time": "2019-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2019-08-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 35,
+        "Time": "2019-09-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 38,
+        "Time": "2019-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2019-11-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 43,
+        "Time": "2019-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 37,
+        "Time": "2020-01-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 40,
+        "Time": "2020-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 32,
+        "Time": "2020-03-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 35,
+        "Time": "2020-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 38,
+        "Time": "2020-05-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2020-06-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 36,
+        "Time": "2020-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2020-08-01"
+      },
+      {
+        "Blue": 49,
+        "Red": 45,
+        "Time": "2020-09-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 45,
+        "Time": "2020-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-11-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 43,
+        "Time": "2021-01-01"
+      },
+      {
+        "Blue": 47,
+        "Red": 49,
+        "Time": "2021-02-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 50,
+        "Time": "2021-03-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 52,
+        "Time": "2021-04-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 54,
+        "Time": "2021-05-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 55,
+        "Time": "2021-06-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 61,
+        "Time": "2021-07-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 56,
+        "Time": "2021-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 65,
+        "Time": "2021-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 76,
+        "Time": "2021-10-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2021-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 77,
+        "Time": "2021-12-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 73,
+        "Time": "2022-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 73,
+        "Time": "2022-02-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 72,
+        "Time": "2022-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 74,
+        "Time": "2022-04-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 84,
+        "Time": "2022-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 81,
+        "Time": "2022-06-01"
+      },
+      {
+        "Blue": 78,
+        "Red": 89,
+        "Time": "2022-07-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2022-08-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 85,
+        "Time": "2022-09-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 87,
+        "Time": "2022-10-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 90,
+        "Time": "2022-11-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 94,
+        "Time": "2022-12-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 84,
+        "Time": "2023-01-01"
+      },
+      {
+        "Blue": 81,
+        "Red": 100,
+        "Time": "2023-02-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 89,
+        "Time": "2023-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 88,
+        "Time": "2023-04-01"
+      },
+      {
+        "Blue": 84,
+        "Red": 97,
+        "Time": "2023-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 89,
+        "Time": "2023-06-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2023-07-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 84,
+        "Time": "2023-08-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 80,
+        "Time": "2023-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 91,
+        "Time": "2023-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 92,
+        "Time": "2023-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 89,
+        "Time": "2023-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 78,
+        "Time": "2024-01-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2024-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 76,
+        "Time": "2024-03-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2024-04-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 78,
+        "Time": "2024-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2024-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 77,
+        "Time": "2024-07-01"
+      },
+      {
+        "Blue": 68,
+        "Red": 73,
+        "Time": "2024-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 81,
+        "Time": "2024-09-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 83,
+        "Time": "2024-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 89,
+        "Time": "2024-11-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 93,
+        "Time": "2024-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2025-01-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 83,
+        "Time": "2025-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 79,
+        "Time": "2025-03-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 81,
+        "Time": "2025-04-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 82,
+        "Time": "2025-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2025-06-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 85,
+        "Time": "2025-07-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 79,
+        "Time": "2025-08-01"
+      },
+      {
+        "Blue": 62,
+        "Red": 75,
+        "Time": "2025-09-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 81,
+        "Time": "2025-10-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 93,
+        "Time": "2025-11-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 98,
+        "Time": "2025-12-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 91,
+        "Time": "2026-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 98,
+        "Time": "2026-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 88,
+        "Time": "2026-03-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 94,
+        "Time": "2026-04-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 95,
+        "Time": "2026-05-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 91,
+        "Time": "2026-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 94,
+        "Time": "2026-07-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 85,
+        "Time": "2026-08-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 84,
+        "Time": "2026-09-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 86,
+        "Time": "2026-10-01"
+      }
+    ],
+    "empty": [
+      {}
+    ]
+  },
+  "layer": [
+    {
+      "data": {
+        "name": "data-bd8392e8702b9d6da0876ad875e0d39e"
+      },
+      "encoding": {
+        "tooltip": [
+          {
+            "field": "Blue",
+            "type": "quantitative"
+          },
+          {
+            "field": "Red",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "Blue",
+          "title": "Popularity of Searches for Blue",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "Red",
+          "title": "Popularity of Searches for Red",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "color": "purple",
+        "type": "circle"
+      },
+      "transform": [
+        {
+          "filter": "(datum['Blue'] >= threshold)"
+        }
+      ]
+    },
+    {
+      "data": {
+        "name": "data-bd8392e8702b9d6da0876ad875e0d39e"
+      },
+      "encoding": {
+        "size": {
+          "aggregate": "count",
+          "scale": {
+            "domain": [
+              0,
+              60
+            ]
+          },
+          "type": "quantitative"
+        },
+        "x": {
+          "bin": {
+            "maxbins": 10
+          },
+          "field": "Blue",
+          "type": "quantitative"
+        },
+        "y": {
+          "bin": {
+            "maxbins": 10
+          },
+          "field": "Red",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "color": "purple",
+        "type": "circle"
+      },
+      "transform": [
+        {
+          "filter": "(datum['Blue'] < threshold)"
+        }
+      ]
+    },
+    {
+      "data": {
+        "name": "empty"
+      },
+      "encoding": {
+        "strokeWidth": {
+          "value": 4
+        },
+        "x": {
+          "datum": {
+            "expr": "threshold"
+          },
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "color": "gray",
+        "type": "rule"
+      }
+    }
+  ],
+  "params": [
+    {
+      "bind": {
+        "input": "range",
+        "max": 90,
+        "min": 0,
+        "step": 1
+      },
+      "name": "threshold",
+      "value": 0
+    }
+  ]
+}
+;
+		vegaEmbed("#chart2", spec2, { actions: true });
+
+	const spec1 = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+  "config": {
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300
+    }
+  },
+  "data": {
+    "name": "data-bd8392e8702b9d6da0876ad875e0d39e"
+  },
+  "datasets": {
+    "data-bd8392e8702b9d6da0876ad875e0d39e": [
+      {
+        "Blue": 18,
+        "Red": 23,
+        "Time": "2004-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 22,
+        "Time": "2004-04-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 22,
+        "Time": "2004-05-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2004-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 21,
+        "Time": "2004-08-01"
+      },
+      {
+        "Blue": 18,
+        "Red": 22,
+        "Time": "2004-09-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2004-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2004-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2004-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2005-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2005-06-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-07-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2005-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 23,
+        "Time": "2005-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2005-10-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 25,
+        "Time": "2005-11-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2005-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-01-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2006-02-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-03-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-04-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 24,
+        "Time": "2006-05-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 23,
+        "Time": "2006-07-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 23,
+        "Time": "2006-08-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2006-09-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 27,
+        "Time": "2006-10-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 26,
+        "Time": "2006-11-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 28,
+        "Time": "2006-12-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-01-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 26,
+        "Time": "2007-02-01"
+      },
+      {
+        "Blue": 19,
+        "Red": 24,
+        "Time": "2007-03-01"
+      },
+      {
+        "Blue": 20,
+        "Red": 25,
+        "Time": "2007-04-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2007-05-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-06-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 26,
+        "Time": "2007-07-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 25,
+        "Time": "2007-08-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 25,
+        "Time": "2007-09-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 29,
+        "Time": "2007-10-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 28,
+        "Time": "2007-11-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2007-12-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-01-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2008-02-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-03-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 27,
+        "Time": "2008-04-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 30,
+        "Time": "2008-05-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 26,
+        "Time": "2008-06-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 28,
+        "Time": "2008-07-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 26,
+        "Time": "2008-08-01"
+      },
+      {
+        "Blue": 21,
+        "Red": 27,
+        "Time": "2008-09-01"
+      },
+      {
+        "Blue": 22,
+        "Red": 29,
+        "Time": "2008-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2008-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 31,
+        "Time": "2008-12-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 29,
+        "Time": "2009-01-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-03-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-04-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 30,
+        "Time": "2009-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 29,
+        "Time": "2009-06-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 28,
+        "Time": "2009-07-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 28,
+        "Time": "2009-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 30,
+        "Time": "2009-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 31,
+        "Time": "2009-10-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 31,
+        "Time": "2009-11-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 34,
+        "Time": "2009-12-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-01-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-02-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 33,
+        "Time": "2010-03-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 33,
+        "Time": "2010-04-01"
+      },
+      {
+        "Blue": 26,
+        "Red": 32,
+        "Time": "2010-05-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 32,
+        "Time": "2010-06-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 30,
+        "Time": "2010-07-01"
+      },
+      {
+        "Blue": 23,
+        "Red": 29,
+        "Time": "2010-08-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-09-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 32,
+        "Time": "2010-10-01"
+      },
+      {
+        "Blue": 24,
+        "Red": 34,
+        "Time": "2010-11-01"
+      },
+      {
+        "Blue": 25,
+        "Red": 36,
+        "Time": "2010-12-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 35,
+        "Time": "2011-01-01"
+      },
+      {
+        "Blue": 27,
+        "Red": 37,
+        "Time": "2011-02-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 36,
+        "Time": "2011-03-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 35,
+        "Time": "2011-04-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-05-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 36,
+        "Time": "2011-06-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 36,
+        "Time": "2011-07-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-08-01"
+      },
+      {
+        "Blue": 28,
+        "Red": 37,
+        "Time": "2011-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 39,
+        "Time": "2011-10-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 38,
+        "Time": "2011-11-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 42,
+        "Time": "2011-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 40,
+        "Time": "2012-01-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-02-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 39,
+        "Time": "2012-03-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2012-04-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2012-05-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 40,
+        "Time": "2012-06-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 42,
+        "Time": "2012-07-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2012-08-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 40,
+        "Time": "2012-09-01"
+      },
+      {
+        "Blue": 29,
+        "Red": 41,
+        "Time": "2012-10-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 43,
+        "Time": "2012-11-01"
+      },
+      {
+        "Blue": 30,
+        "Red": 46,
+        "Time": "2012-12-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 41,
+        "Time": "2013-01-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 46,
+        "Time": "2013-02-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 49,
+        "Time": "2013-03-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 42,
+        "Time": "2013-04-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 43,
+        "Time": "2013-05-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-06-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 42,
+        "Time": "2013-07-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 43,
+        "Time": "2013-08-01"
+      },
+      {
+        "Blue": 31,
+        "Red": 41,
+        "Time": "2013-09-01"
+      },
+      {
+        "Blue": 32,
+        "Red": 45,
+        "Time": "2013-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 44,
+        "Time": "2013-11-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 47,
+        "Time": "2013-12-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 44,
+        "Time": "2014-01-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 45,
+        "Time": "2014-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-03-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 50,
+        "Time": "2014-04-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 46,
+        "Time": "2014-05-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 47,
+        "Time": "2014-06-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 45,
+        "Time": "2014-07-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 43,
+        "Time": "2014-08-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2014-09-01"
+      },
+      {
+        "Blue": 35,
+        "Red": 46,
+        "Time": "2014-10-01"
+      },
+      {
+        "Blue": 34,
+        "Red": 45,
+        "Time": "2014-11-01"
+      },
+      {
+        "Blue": 37,
+        "Red": 48,
+        "Time": "2014-12-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 45,
+        "Time": "2015-01-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 49,
+        "Time": "2015-02-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2015-03-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 46,
+        "Time": "2015-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 47,
+        "Time": "2015-05-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 46,
+        "Time": "2015-06-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 48,
+        "Time": "2015-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 45,
+        "Time": "2015-08-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 48,
+        "Time": "2015-09-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-10-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 49,
+        "Time": "2015-11-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 50,
+        "Time": "2015-12-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 47,
+        "Time": "2016-01-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 49,
+        "Time": "2016-02-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 48,
+        "Time": "2016-03-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 49,
+        "Time": "2016-04-01"
+      },
+      {
+        "Blue": 45,
+        "Red": 49,
+        "Time": "2016-05-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-06-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 50,
+        "Time": "2016-07-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 47,
+        "Time": "2016-08-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 47,
+        "Time": "2016-09-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 52,
+        "Time": "2016-10-01"
+      },
+      {
+        "Blue": 53,
+        "Red": 57,
+        "Time": "2016-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 63,
+        "Time": "2016-12-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 62,
+        "Time": "2017-01-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 68,
+        "Time": "2017-02-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 74,
+        "Time": "2017-03-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 76,
+        "Time": "2017-04-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 77,
+        "Time": "2017-05-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 69,
+        "Time": "2017-06-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 70,
+        "Time": "2017-07-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 65,
+        "Time": "2017-08-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 72,
+        "Time": "2017-09-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 77,
+        "Time": "2017-10-01"
+      },
+      {
+        "Blue": 57,
+        "Red": 77,
+        "Time": "2017-11-01"
+      },
+      {
+        "Blue": 55,
+        "Red": 76,
+        "Time": "2017-12-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 72,
+        "Time": "2018-01-01"
+      },
+      {
+        "Blue": 52,
+        "Red": 64,
+        "Time": "2018-02-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 39,
+        "Time": "2018-03-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 33,
+        "Time": "2018-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 32,
+        "Time": "2018-05-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 30,
+        "Time": "2018-06-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 35,
+        "Time": "2018-07-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 34,
+        "Time": "2018-08-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-09-01"
+      },
+      {
+        "Blue": 33,
+        "Red": 29,
+        "Time": "2018-10-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 38,
+        "Time": "2018-11-01"
+      },
+      {
+        "Blue": 40,
+        "Red": 39,
+        "Time": "2018-12-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 33,
+        "Time": "2019-01-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 34,
+        "Time": "2019-02-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 31,
+        "Time": "2019-03-01"
+      },
+      {
+        "Blue": 38,
+        "Red": 29,
+        "Time": "2019-04-01"
+      },
+      {
+        "Blue": 42,
+        "Red": 33,
+        "Time": "2019-05-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 42,
+        "Time": "2019-06-01"
+      },
+      {
+        "Blue": 48,
+        "Red": 37,
+        "Time": "2019-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2019-08-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 35,
+        "Time": "2019-09-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 38,
+        "Time": "2019-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2019-11-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 43,
+        "Time": "2019-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 37,
+        "Time": "2020-01-01"
+      },
+      {
+        "Blue": 41,
+        "Red": 40,
+        "Time": "2020-02-01"
+      },
+      {
+        "Blue": 36,
+        "Red": 32,
+        "Time": "2020-03-01"
+      },
+      {
+        "Blue": 39,
+        "Red": 35,
+        "Time": "2020-04-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 38,
+        "Time": "2020-05-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 34,
+        "Time": "2020-06-01"
+      },
+      {
+        "Blue": 43,
+        "Red": 36,
+        "Time": "2020-07-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 40,
+        "Time": "2020-08-01"
+      },
+      {
+        "Blue": 49,
+        "Red": 45,
+        "Time": "2020-09-01"
+      },
+      {
+        "Blue": 50,
+        "Red": 45,
+        "Time": "2020-10-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-11-01"
+      },
+      {
+        "Blue": 44,
+        "Red": 48,
+        "Time": "2020-12-01"
+      },
+      {
+        "Blue": 46,
+        "Red": 43,
+        "Time": "2021-01-01"
+      },
+      {
+        "Blue": 47,
+        "Red": 49,
+        "Time": "2021-02-01"
+      },
+      {
+        "Blue": 54,
+        "Red": 50,
+        "Time": "2021-03-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 52,
+        "Time": "2021-04-01"
+      },
+      {
+        "Blue": 58,
+        "Red": 54,
+        "Time": "2021-05-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 55,
+        "Time": "2021-06-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 61,
+        "Time": "2021-07-01"
+      },
+      {
+        "Blue": 56,
+        "Red": 56,
+        "Time": "2021-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 65,
+        "Time": "2021-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 76,
+        "Time": "2021-10-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2021-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 77,
+        "Time": "2021-12-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 73,
+        "Time": "2022-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 73,
+        "Time": "2022-02-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 72,
+        "Time": "2022-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 74,
+        "Time": "2022-04-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 84,
+        "Time": "2022-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 81,
+        "Time": "2022-06-01"
+      },
+      {
+        "Blue": 78,
+        "Red": 89,
+        "Time": "2022-07-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2022-08-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 85,
+        "Time": "2022-09-01"
+      },
+      {
+        "Blue": 74,
+        "Red": 87,
+        "Time": "2022-10-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 90,
+        "Time": "2022-11-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 94,
+        "Time": "2022-12-01"
+      },
+      {
+        "Blue": 75,
+        "Red": 84,
+        "Time": "2023-01-01"
+      },
+      {
+        "Blue": 81,
+        "Red": 100,
+        "Time": "2023-02-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 89,
+        "Time": "2023-03-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 88,
+        "Time": "2023-04-01"
+      },
+      {
+        "Blue": 84,
+        "Red": 97,
+        "Time": "2023-05-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 89,
+        "Time": "2023-06-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 87,
+        "Time": "2023-07-01"
+      },
+      {
+        "Blue": 76,
+        "Red": 84,
+        "Time": "2023-08-01"
+      },
+      {
+        "Blue": 77,
+        "Red": 80,
+        "Time": "2023-09-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 91,
+        "Time": "2023-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 92,
+        "Time": "2023-11-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 89,
+        "Time": "2023-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 78,
+        "Time": "2024-01-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2024-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 76,
+        "Time": "2024-03-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2024-04-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 78,
+        "Time": "2024-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 76,
+        "Time": "2024-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 77,
+        "Time": "2024-07-01"
+      },
+      {
+        "Blue": 68,
+        "Red": 73,
+        "Time": "2024-08-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 81,
+        "Time": "2024-09-01"
+      },
+      {
+        "Blue": 59,
+        "Red": 83,
+        "Time": "2024-10-01"
+      },
+      {
+        "Blue": 64,
+        "Red": 89,
+        "Time": "2024-11-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 93,
+        "Time": "2024-12-01"
+      },
+      {
+        "Blue": 60,
+        "Red": 83,
+        "Time": "2025-01-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 83,
+        "Time": "2025-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 79,
+        "Time": "2025-03-01"
+      },
+      {
+        "Blue": 71,
+        "Red": 81,
+        "Time": "2025-04-01"
+      },
+      {
+        "Blue": 72,
+        "Red": 82,
+        "Time": "2025-05-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 82,
+        "Time": "2025-06-01"
+      },
+      {
+        "Blue": 66,
+        "Red": 85,
+        "Time": "2025-07-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 79,
+        "Time": "2025-08-01"
+      },
+      {
+        "Blue": 62,
+        "Red": 75,
+        "Time": "2025-09-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 81,
+        "Time": "2025-10-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 93,
+        "Time": "2025-11-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 98,
+        "Time": "2025-12-01"
+      },
+      {
+        "Blue": 61,
+        "Red": 91,
+        "Time": "2026-01-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 98,
+        "Time": "2026-02-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 88,
+        "Time": "2026-03-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 94,
+        "Time": "2026-04-01"
+      },
+      {
+        "Blue": 73,
+        "Red": 95,
+        "Time": "2026-05-01"
+      },
+      {
+        "Blue": 69,
+        "Red": 91,
+        "Time": "2026-06-01"
+      },
+      {
+        "Blue": 65,
+        "Red": 94,
+        "Time": "2026-07-01"
+      },
+      {
+        "Blue": 70,
+        "Red": 85,
+        "Time": "2026-08-01"
+      },
+      {
+        "Blue": 63,
+        "Red": 84,
+        "Time": "2026-09-01"
+      },
+      {
+        "Blue": 67,
+        "Red": 86,
+        "Time": "2026-10-01"
+      }
+    ]
+  },
+  "encoding": {
+    "tooltip": [
+      {
+        "field": "Blue",
+        "type": "quantitative"
+      },
+      {
+        "field": "Red",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "field": "Blue",
+      "title": "Popularity of Searches for Blue",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "Red",
+      "title": "Popularity of Searches for Red",
+      "type": "quantitative"
+    }
+  },
+  "mark": {
+    "color": "purple",
+    "type": "circle"
+  }
+}
  ;
     vegaEmbed("#chart1", spec1, { actions: true });
 	</script>
