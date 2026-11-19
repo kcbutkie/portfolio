@@ -46,13 +46,62 @@
 				<p>
 					These tutorials are based off of the example visuals found
 					on <a href="https://altair-viz.github.io/gallery/index.html#example-gallery">
-					Vega-Altair's example gallery</a>.
+					Vega-Altair's example gallery</a>. However, the tutorial below goes further
+					in-depth about what to change in the code and some ways to customize the
+					interactive features without breaking them.
+				</p>
+				<p>
+					For these graphs, I used the data that I had pulled from the Google Trends time
+					series activity (activity 7), so feel free to load in your data (or you can
+					download the dataset I used for the examples <a href="link">HERE</a>) in order to
+					follow along.
 				</p>
 			</article>
-	
-		</main>
 
+			<article>
+				<h2>Initial Chart</h2>
+				<p>
+					Before adding in some interactivity, let's first create a simple scatterplot to show us what
+					we're working with.
+				</p>
+			</article>
+			<p>
+					Code:
+			</p>
+			<pre>
+				style="font-family:courier;">
+				import altair as alt, pandas as pd
+				from google.colab import files
+				uploaded = files.upload()
+			</pre>
+		</main>
 	</section>
+
+	<section id="pageContent1">
+		<main role="main">
+			<article>
+
+			</article>
+		</main>
+	</section>
+	<section>
+		<figure>
+			<div id="chart1" class="chart"></div>
+			<figcaption class="writeup">
+			When we run the code, we get this plot.
+			</figcaption>
+		</figure>
+	</section>
+
+
+
+	<script>
+		// example: const specX = {...};
+		// vegaEmbed("#chartX", specX, { actions: true });
+	const spec1 = {...}
+ ;
+    vegaEmbed("#chart1", spec1, { actions: true });
+	</script>
 	<footer>
 		<p> Template credit | <a href="https://html5-templates.com/" target="_blank" rel="nofollow">HTML5 Templates</a></p>
 		<address>
